@@ -164,6 +164,9 @@ pub struct Status {
     /// This field is provided only if the kernel was built with the
     /// `CONFIG_SECCOMP` kernel configuration option enabled.
     pub seccomp: SeccompMode,
+    /// Information on the speculation store bypass setting
+    /// This field is optional
+    pub spec_store_bypass: Option<String>,
     /// CPUs on which this process may run (since Linux 2.6.24, see cpuset(7)).
     ///
     /// The slice represents a bitmask in the same format as `BitVec`.
@@ -253,7 +256,7 @@ named!(parse_cap_ambient<u64>,  delimited!(tag!("CapAmb:\t"), parse_u64_hex, lin
 
 named!(parse_no_new_privs<bool>,       delimited!(tag!("NoNewPrivs:\t"),   parse_bit,           line_ending));
 named!(parse_seccomp<SeccompMode>,     delimited!(tag!("Seccomp:\t"),      parse_seccomp_mode,  line_ending));
-named!(parse_spec_store_bypass<String>, chain!(tag!("Speculation_Store_Bypass:\t") ~ not_line_ending ~ line_ending, || { ()} ));
+named!(parse_spec_store_bypass<String>, chain!(tag!("Speculation_Store_Bypass:\t") ~ v: not_line_ending ~ line_ending, || { std::str::from_utf8(v).unwrap().to_string() }));
 named!(parse_cpus_allowed<Box<[u8]> >, delimited!(tag!("Cpus_allowed:\t"), parse_u32_mask_list, line_ending));
 named!(parse_mems_allowed<Box<[u8]> >, delimited!(tag!("Mems_allowed:\t"), parse_u32_mask_list, line_ending));
 
@@ -326,6 +329,7 @@ fn parse_status(i: &[u8]) -> IResult<&[u8], Status> {
 
                | parse_no_new_privs  => { |value| status.no_new_privs  = value }
                | parse_seccomp       => { |value| status.seccomp       = value }
+               | parse_spec_store_bypass => { |value| status.spec_store_bypass = Some(value) }
                | parse_cpus_allowed  => { |value| status.cpus_allowed  = value }
                | parse_cpus_allowed_list
                | parse_mems_allowed  => { |value| status.mems_allowed  = value }
