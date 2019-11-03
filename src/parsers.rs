@@ -159,6 +159,11 @@ named!(pub parse_u32_hex<u32>,
        map_res!(map_res!(alphanumeric, str::from_utf8),
                 |s| u32::from_str_radix(s, 16)));
 
+/// Parses a u16 in base-8 format.
+named!(pub parse_u16_octal<u16>,
+       map_res!(map_res!(alphanumeric, str::from_utf8),
+                |s| u16::from_str_radix(s, 8)));
+
 /// Parses a u32 in base-8 format.
 named!(pub parse_u32_octal<u32>,
        map_res!(map_res!(alphanumeric, str::from_utf8),
